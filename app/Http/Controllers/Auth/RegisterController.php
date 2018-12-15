@@ -95,7 +95,7 @@ class RegisterController extends Controller
 
     public function userActivation($token){
         $check = DB::table('user_activations')->where('token',$token)->first();
-         dd ($check);
+         //dd ($check);
         if(!is_null($check)){
             //  dd ($user);
             $user = User::find($check->id_user);
