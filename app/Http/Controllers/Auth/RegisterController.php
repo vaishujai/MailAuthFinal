@@ -93,4 +93,22 @@ class RegisterController extends Controller
         return back()->with('errors', $validator->errors());
     }
 
+    public function userActivation($token){
+        $check = DB::table('user_activations')->where('token',$token)->first();
+         dd ($check);
+        if(!is_null($check)){
+            //  dd ($user);
+            $user = User::find($check->id_user);
+            // dd ($user);
+            if ($user->is_activated ==1){
+                // dd ($user);
+                return redirect()->to('login')->with('success',"Account Activated");
+
+            }
+            $user->update(['is_activated' => 1]);
+            DB::table('user_activations')->where('token',$token)->delete();
+            return redirect()->to('login')->with('success',"Successful Registration");
+        }
+        return redirect()->to('login')->with('Warning',"Invalid Token");
+    }
 }
