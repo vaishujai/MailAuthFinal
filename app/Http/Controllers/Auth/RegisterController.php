@@ -7,6 +7,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
+use DB;
+use Mail;
 
 class RegisterController extends Controller
 {
@@ -43,7 +46,7 @@ class RegisterController extends Controller
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
+     * @param  array $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
@@ -58,7 +61,7 @@ class RegisterController extends Controller
     /**
      * Create a new user instance after a valid registration.
      *
-     * @param  array  $data
+     * @param  array $data
      * @return \App\User
      */
     protected function create(array $data)
@@ -69,4 +72,25 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
         ]);
     }
+
+    public function register(Request $request)
+    {
+        $data = $request->all();
+        $validator = $this->validator($data);
+
+        if ($validator->passes()) {
+            $user = $this->create($data)->toArray();
+            $user['link'] = str_random(30);
+
+            DB::table('user_activations')->insert(['id_user' => $user['id'], 'token' => $user['link']]);
+
+            Mail::send('emails.activation', $user, function ($message) use ($user) {
+                $message->to($user['email']);
+                $message->subject(' Your Activation code');
+            });
+            return redirect()->to('login')->with('success', "Welcome! We have sent your activation code. Please click on the link");
+        }
+        return back()->with('errors', $validator->errors());
+    }
+
 }
